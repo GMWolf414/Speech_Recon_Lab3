@@ -1,11 +1,9 @@
 # Sprawozdanie laboratoryjne
 
 **Przedmiot:** Uczenie głębokie w systemach rozpoznawania i przetwarzania mowy  
-**Zajęcia nr / temat:** Laboratorium 3 — Prognozowanie szeregów czasowych: prognoza wielokrokowa i porównanie z baseline’ami  
-**Autor / grupa:** Oskar Pietrzak / do uzupełnienia  
-**Data:** 04.11.2026  
-**Prowadzący:** dr Tomasz Cieplak / mgr inż. Patryk Marek  
-**Rok akademicki:** 2026/27
+**Temat:** Laboratorium 3 — Prognozowanie szeregów czasowych: prognoza wielokrokowa i porównanie z baseline’ami  
+**Autor:** Oskar Pietrzak
+**Data:** 03.11.2026  
 
 ## 1. Cel ćwiczenia
 
@@ -85,22 +83,20 @@ MAE GRU przy `h = 1` wynosi 2.71, a przy `h = 14` 4.24. Największy błąd wyst�
 
 ## 4. Analiza i interpretacja
 
-**GRU a proste prognozy.** Jednokrokowo GRU wygrywa z obiema regułami: MAE = 2.91, wobec 3.21 dla reguły sezonowej i 5.44 dla naiwnej. Poprawa względem sezonowej wynosi 9.2%. GRU może wykorzystać kilka tygodni i ograniczyć wpływ szumu kopiowanego przez regułę sezonową. W prognozie 14-dniowej GRU nadal wygrywa z naiwną, lecz przegrywa z sezonową (3.88 wobec 3.52; MAE wyższe o 10.4%). Rekurencja zastępuje rzeczywiste obserwacje prognozami, więc błędy przenoszą się na kolejne kroki. Sezonowy wzorzec pozostaje stabilnym punktem odniesienia.
+1. Czy GRU bije baseline’y jedno- i wielokrokowo? Dlaczego wyniki się różnią?
+Jednokrokowo tak: MAE GRU = 2,91, sezonowego = 3,21, naiwnego = 5,44. Wielokrokowo GRU (3,88) wygrywa tylko z naiwnym (10,09), a przegrywa z sezonowym (3,52), ponieważ błędy prognoz rekurencyjnych się kumulują.
 
-**Odległość od granicy szumu.** Dla szumu N(0, 3²) oczekiwane MAE idealnej prognozy części deterministycznej wynosi 3·sqrt(2/pi) = 2.3937. Wynik GRU jest wyższy o 0.5195 jednostki, czyli około 21.7%. RMSE = 3.54 wobec teoretycznego 3,00. Model jest blisko poziomu szumu, ale pozostaje błąd modelowania. Granica dotyczy wartości oczekiwanej; na skończonej próbie wynik nie musi być od niej zawsze większy.
+2. Jak daleko jest wynik jednokrokowy od granicy szumu MAE ≈ 2,39?
+MAE GRU = 2,91 jest wyższe o około 0,52 jednostki, czyli o 22%.
 
-**Długość okna i wybór wariantu.** Okno 3 dni daje średnie MAE 5.02 dla jednego kroku i 7.30 dla 14 dni. Nie obejmuje pełnego cyklu tygodniowego, co utrudnia rozpoznanie fazy sezonowości i oddzielenie jej od szumu. Przejście do 7 dni wyraźnie pomaga. Według średniej minimalnej straty walidacyjnej najlepsze jest okno 28 dni (0.08363 wobec 0.08758 dla 7 dni). Dłuższe okno nie daje jednak stałej poprawy na teście: średnie MAE dla 7 dni jest nieco niższe w obu trybach. Nie zmieniam wyboru na podstawie testu.
+3. Dlaczego okno 3 dni daje gorszy wynik? Czy dłuższe okno coś poprawia?
+Nie obejmuje pełnego cyklu tygodniowego, co utrudnia rozpoznanie sezonowości. Okno 7 dni wyraźnie pomaga; 28 dni ma najlepszą walidację, ale nie daje stałej poprawy na teście względem 7 dni.
 
-**Różnice między wariantami a rozrzut ziaren.** Pogorszenie dla 3 dni względem 7 i 28 dni jest większe od zaobserwowanego rozrzutu dwóch ziaren. Porównanie 7 z 28 dniami nie daje tak mocnego wniosku: różnica średnich MAE wynosi 0.0688 jednokrokowo i 0.0344 wielokrokowo. Rozstępy dla 7/28 dni to odpowiednio 0.0234/0.0959 i 0.3223/0.4130. Wyniki 14-dniowe silnie zależą od ziarna. Dwa uruchomienia pozwalają opisać rozrzut, ale nie wystarczają do potwierdzenia istotności statystycznej niewielkich różnic.
+4. Czy różnice między wariantami są większe niż rozrzut między ziarnami?
+Tak dla okna 3 dni względem 7 i 28 dni. Różnice między oknami 7 i 28 dni są małe względem obserwowanego rozrzutu, szczególnie wielokrokowo; dwa ziarna nie pozwalają wskazać wyraźnej przewagi.
 
-**Związek z przetwarzaniem mowy.** Okno dni odpowiada kontekstowi ramek cech mowy. Zbyt krótki kontekst utrudnia rozpoznanie zależności czasowych, np. koartykulacji i rytmu. Dłuższy kontekst może pomagać, lecz zwiększa koszt i nie gwarantuje poprawy. W autoregresyjnej syntezie mowy, np. generowaniu kolejnych próbek przez WaveRNN, błędna próbka lub ramka staje się wejściem następnego kroku. To odpowiednik kumulacji błędów w prognozie sprzedaży. Także normalizacja bez przecieku i rozdzielanie nagrań oraz mówców między zbiorami są odpowiednikami uczciwej walidacji w tym ćwiczeniu.
-
-**Ograniczenia:** jeden syntetyczny szereg i jeden podział chronologiczny; tylko dwa ziarna i 10 startów wielokrokowych. Dla okien 3/7/28 liczby przykładów treningowych wynoszą 697/693/672; dni walidacyjne i testowe są wspólne. Wyniki opisują ten eksperyment i nie przesądzają o skuteczności na rzeczywistych danych. Prognoza poza końcem danych jest wyłącznie ilustracją i nie została użyta do liczenia metryk.
-
+5. Co przenosi się na modele mowy, np. syntezę krok po kroku?
+Okno odpowiada kontekstowi ramek mowy: zbyt krótki utrudnia uchwycenie zależności. W autoregresyjnej syntezie, np. WaveRNN, błędna prognoza staje się wejściem kolejnego kroku i może powodować kumulację błędów.
 ## 5. Wnioski
 
 GRU poprawia prognozę jednokrokową względem obu baseline’ów, ale przy rekurencyjnej prognozie na 14 dni najlepsza jest reguła sezonowa. Okno obejmujące co najmniej tydzień jest wyraźnie lepsze od 3 dni. Wybrano 28 dni według walidacji; przewaga nad 7 dniami jest niewielka i zależy od losowania. Dalsze sprawdzenie wymaga większej liczby ziaren oraz walidacji kroczącej. Dla ograniczenia kumulacji błędów można porównać GRU rekurencyjne z modelem przewidującym od razu 14 wartości. Nie wykonywano nieobowiązkowego wariantu na własnym szeregu.
-
----
-
-**Materiały:** `zadanie_lab3_03.pdf`; `wstep_teoretyczny_lab_03.pdf` (części 1, 3–5 i 8); `cwiczenie_lab_03.ipynb`; `szablon_sprawozdania (2).md`. Wyniki w tym sprawozdaniu pochodzą z ponownego wykonania kodu, a nie z przepisania wartości ze wstępu.
